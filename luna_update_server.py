@@ -2,66 +2,60 @@ from flask import Flask, request, Response
 
 app = Flask(__name__)
 
-LATEST_VERSION = "1.17.2"
+# CONFIG
+GAME_VERSION = "1.17.2"
 
-# 🔥 MODO DEFINIDO (sem auto-teste agora)
-WORKING_MODE = "LEGACY_7"
-
-
-def build_response():
-    if WORKING_MODE == "LEGACY_7":
-        return f"versioninfo\n{LATEST_VERSION}\nfileinfo=/assets/android/fileinfo"
-
-
-# ================================
-# 🔹 VERSION CHECK
-# ================================
-@app.route("/live/ver.php", methods=["GET"])
-def version_check():
+# ==============================
+# LOG PADRÃO
+# ==============================
+def log_request():
     print("\n==============================")
     print(">>> METHOD:", request.method)
     print(">>> PATH:", request.path)
     print(">>> PARAMS:", dict(request.args))
     print("==============================")
 
-    resp = build_response()
+# ==============================
+# ROTA PRINCIPAL (VER.PHP)
+# ==============================
+@app.route("/live/ver.php", methods=["GET"])
+def ver():
+    log_request()
 
-    print(">>> USANDO MODO FIXO: LEGACY_7")
-    print(">>> RESPOSTA:\n" + resp)
+    print(">>> USANDO MODO FINAL: LEGACY_7")
 
-    return Response(resp, mimetype="text/plain")
+    response_text = f"""versioninfo
+{GAME_VERSION}
+fileinfo=/assets/android/fileinfo"""
 
+    return Response(response_text, mimetype="text/plain")
 
-# ================================
-# 🔹 FILEINFO (🔥 ESSENCIAL)
-# ================================
+# ==============================
+# FILEINFO (OBRIGATÓRIO)
+# ==============================
 @app.route("/assets/android/fileinfo", methods=["GET"])
 def fileinfo():
-    print("\n==============================")
-    print(">>> FILEINFO REQUEST RECEBIDA")
-    print("==============================")
+    print("\n>>> FILEINFO REQUEST RECEBIDA")
 
-    # 🔥 versão compatível (texto simples)
-    resp = f"""version={LATEST_VERSION}
-url=https://discord.gg/gXXYjY8k4
-force=1
-"""
+    return {
+        "status": "ok",
+        "version": GAME_VERSION,
+        "url": "https://discord.gg/gXXYjY8k4",
+        "size": "12345678",
+        "force": True
+    }
 
-    print(">>> RESPOSTA FILEINFO:\n" + resp)
-
-    return Response(resp, mimetype="text/plain")
-
-
-# ================================
-# 🔹 TESTE ROOT
-# ================================
-@app.route("/")
+# ==============================
+# ROTA ROOT (EVITA ERRO NO RENDER)
+# ==============================
+@app.route("/", methods=["GET", "HEAD"])
 def home():
-    return "SERVER OK", 200
+    return "OK", 200
 
-
-# ================================
-# 🔹 START
-# ================================
+# ==============================
+# START
+# ==============================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    import os
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
