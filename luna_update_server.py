@@ -7,7 +7,7 @@ app = Flask(__name__)
 # ================================
 # CONFIG REAL (100% ORIGINAL)
 # ================================
-LATEST_VERSION = "1.17.2"
+LATEST_VERSION = "1.17.1"
 
 FILEINFO_URL = "https://versionscommon.onrender.com/assets/android/fileinfo"
 
