@@ -3,10 +3,13 @@ import os
 
 app = Flask(__name__)
 
+# 📁 pasta base dos assets
 BASE_DIR = "assets/android/gameassetbundles"
 
+# 🔢 versão (mude aqui quando quiser testar)
 VERSION = "1.17.2"
 
+# 📄 fileinfo (igual você já tem)
 FILEINFO = """gameassetbundles,mzZtylZ1fawV5N8D8XikRyF+5mY=,12060,0
 main/gameentry,DZlCrLRuzwyuNzUZrh+p0QxJCcI=,2018,0
 localization/loc,gWXz0dDNM8MJyFcAFhzbqWWqvrY=,632921,0
@@ -15,70 +18,86 @@ config/resconf,ysnx0NubzKPaLVGszrP45y9WQH0=,34896,0
 avatar/assetindexer,IbV74Hqrb07rdlrKYQx6JZIhZ5M=,74343,0
 avatar/uma_dcs,BSJQtQt6qEeFdLv8gsrVtPDQubo=,14523,0"""
 
-# 🔍 LOGGER GLOBAL
+# ==============================
+# 🔍 LOG GLOBAL
+# ==============================
 @app.before_request
 def log_request():
     print("\n==============================")
     print(f">>> METHOD: {request.method}")
     print(f">>> PATH: {request.path}")
-    print(f">>> FULL URL: {request.url}")
+    print(f">>> URL: {request.url}")
 
-    print(">>> QUERY PARAMS:")
-    for k, v in request.args.items():
-        print(f"   {k} = {v}")
-
-    print(">>> HEADERS:")
-    for k, v in request.headers.items():
-        print(f"   {k}: {v}")
+    if request.args:
+        print(">>> PARAMS:")
+        for k, v in request.args.items():
+            print(f"   {k} = {v}")
 
     print("==============================\n")
 
 
-# 🔹 VERSION ENDPOINT
+# ==============================
+# 🔹 1. VERSION (CORRETO AGORA)
+# ==============================
 @app.route("/live/ver.php")
 def version():
-    print(">>> RESPONDENDO VERSIONINFO")
+    print(">>> RESPONDENDO VERSÃO SIMPLES")
 
-    response_text = f"""versioninfo
-{VERSION}
-
-fileinfo
-{FILEINFO}
-"""
-
+    # ⚠️ IMPORTANTE: só versão
     return Response(
-        response_text,
+        VERSION,
         status=200,
-        mimetype="text/plain; charset=utf-8"
+        mimetype="text/plain"
     )
 
 
-# 🔹 ASSETS
+# ==============================
+# 🔹 2. FILEINFO (SEPARADO)
+# ==============================
+@app.route("/assets/android/fileinfo")
+def fileinfo():
+    print(">>> ENVIANDO FILEINFO")
+
+    return Response(
+        FILEINFO,
+        status=200,
+        mimetype="text/plain"
+    )
+
+
+# ==============================
+# 🔹 3. ASSETS (DOWNLOAD REAL)
+# ==============================
 @app.route("/assets/android/gameassetbundles/<path:filepath>")
 def serve_asset(filepath):
     full_path = os.path.join(BASE_DIR, filepath)
 
-    print(f">>> ASSET REQUEST: {filepath}")
-    print(f">>> FULL PATH: {full_path}")
+    print(f">>> ASSET: {filepath}")
+    print(f">>> PATH: {full_path}")
 
     if not os.path.exists(full_path):
-        print(">>> ERRO: ARQUIVO NÃO EXISTE ❌")
+        print(">>> ERRO: NÃO EXISTE ❌")
         return "Not Found", 404
 
     size = os.path.getsize(full_path)
-    print(f">>> TAMANHO REAL: {size} bytes")
+    print(f">>> TAMANHO: {size} bytes")
 
     return send_file(full_path, as_attachment=False)
 
 
-# 🔹 CAPTURA QUALQUER COISA QUE NÃO EXISTE
+# ==============================
+# 🔹 CAPTURA QUALQUER OUTRA ROTA
+# ==============================
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def catch_all(path):
-    print(f">>> ENDPOINT DESCONHECIDO: /{path}")
+    print(f">>> ROTA DESCONHECIDA: /{path}")
     return "OK", 200
 
 
+# ==============================
+# 🚀 START
+# ==============================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     app.run(host="0.0.0.0", port=port)
