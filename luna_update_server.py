@@ -6,7 +6,7 @@ app = Flask(__name__)
 # ==============================
 # CONFIG
 # ==============================
-GAME_VERSION = "1.17.1"  # 🔥 AGORA IGUAL AO CLIENTE
+GAME_VERSION = "1.17.2"  # 🔥 FORÇA UPDATE
 BASE_URL = "https://versionscommon.onrender.com"
 
 # ==============================
@@ -28,6 +28,7 @@ def ver():
 
     print(">>> USANDO MODO FINAL: LEGACY_7")
 
+    # ⚠️ FORMATO EXATO (SEM ERRO)
     response_text = f"versioninfo\n{GAME_VERSION}\nfileinfo={BASE_URL}/assets/android/fileinfo"
 
     print(">>> RESPONSE RAW:", repr(response_text))
@@ -62,7 +63,7 @@ def fileinfo():
     return jsonify(data)
 
 # ==============================
-# APK (fake)
+# APK (FAKE CDN)
 # ==============================
 @app.route("/update.apk", methods=["GET"])
 def download_apk():
@@ -78,7 +79,6 @@ def catch_all_live(anything):
     print(">>> /live/" + anything)
     print(">>> PARAMS:", dict(request.args))
 
-    # resposta neutra
     return "OK", 200
 
 # ==============================
