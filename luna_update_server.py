@@ -1,7 +1,9 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, send_file
 import os
 
 app = Flask(__name__)
+
+BASE_DIR = "assets/android/gameassetbundles"
 
 VERSION = "1.17.1"
 
@@ -13,13 +15,10 @@ config/resconf,ysnx0NubzKPaLVGszrP45y9WQH0=,34896,0
 avatar/assetindexer,IbV74Hqrb07rdlrKYQx6JZIhZ5M=,74343,0
 avatar/uma_dcs,BSJQtQt6qEeFdLv8gsrVtPDQubo=,14523,0"""
 
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>", methods=["GET", "POST"])
-def catch_all(path):
-    ua = request.headers.get("User-Agent", "Unknown")
-
-    print(f"\n>>> {request.method} /{path}")
-    print(f">>> UA: {ua}")
+# 🔹 VERSION ENDPOINT
+@app.route("/live/ver.php")
+def version():
+    print(">>> VERSION REQUEST")
 
     response_text = f"""versioninfo
 {VERSION}
@@ -28,12 +27,31 @@ fileinfo
 {FILEINFO}
 """
 
-    return Response(
-        response_text,
-        status=200,
-        mimetype="text/plain; charset=utf-8"
-    )
+    return Response(response_text, mimetype="text/plain")
+
+
+# 🔹 ASSETS (CDN FAKE REAL)
+@app.route("/assets/android/gameassetbundles/<path:filepath>")
+def serve_asset(filepath):
+    full_path = os.path.join(BASE_DIR, filepath)
+
+    print(f">>> ASSET REQUEST: {filepath}")
+    print(f">>> PATH: {full_path}")
+
+    if not os.path.exists(full_path):
+        print(">>> FILE NOT FOUND ❌")
+        return "Not Found", 404
+
+    return send_file(full_path, as_attachment=False)
+
+
+# 🔹 DEBUG CATCH
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def catch_all(path):
+    print(f">>> UNKNOWN REQUEST: {path}")
+    return "OK"
+
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=8000)
