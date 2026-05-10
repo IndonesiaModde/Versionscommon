@@ -3,7 +3,7 @@ from flask import Flask, request, Response
 app = Flask(__name__)
 
 # CONFIG
-GAME_VERSION = "1.17.2"
+GAME_VERSION = "1.17.1"
 
 # ==============================
 # LOG PADRÃO
