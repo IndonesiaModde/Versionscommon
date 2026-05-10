@@ -1,11 +1,11 @@
-from flask import Flask, request
+from flask import Flask, request, Response
 import os
 
 app = Flask(__name__)
 
-# Dados de resposta
-VERSION_DATA = "1.17.1"
-FILE_INFO_DATA = """gameassetbundles,mzZtylZ1fawV5N8D8XikRyF+5mY=,12060,0
+VERSION = "1.17.1"
+
+FILEINFO = """gameassetbundles,mzZtylZ1fawV5N8D8XikRyF+5mY=,12060,0
 main/gameentry,DZlCrLRuzwyuNzUZrh+p0QxJCcI=,2018,0
 localization/loc,gWXz0dDNM8MJyFcAFhzbqWWqvrY=,632921,0
 ingame/avatarmanager,Tjb+QEzOiGwy+DBpxlLrVBZRphA=,1915,0
@@ -14,29 +14,26 @@ avatar/assetindexer,IbV74Hqrb07rdlrKYQx6JZIhZ5M=,74343,0
 avatar/uma_dcs,BSJQtQt6qEeFdLv8gsrVtPDQubo=,14523,0"""
 
 @app.route("/", defaults={"path": ""})
-@app.route("/<path:path>", methods=["GET", "POST", "HEAD"])
+@app.route("/<path:path>", methods=["GET", "POST"])
 def catch_all(path):
-    # O Flask às vezes limpa as barras extras, mas vamos garantir
-    # Log para monitoramento
-    ua = request.headers.get("User-Agent", "Desconhecido")
-    print(f"\n>>> REQUISIÇÃO: {request.method} /{path}")
-    print(f">>> USER-AGENT: {ua}")
-    
-    # Se o jogo estiver pedindo a versão ou arquivos
-    # Verificamos se o caminho contém 'live' ou 'ver.php'
-    full_path = path.lower()
-    
-    if "ver.php" in full_path or "version" in full_path:
-        print(f">>> ENVIANDO VERSÃO: {VERSION_DATA}")
-        return VERSION_DATA
-        
-    if "fileinfo" in full_path:
-        print(">>> ENVIANDO FILEINFO DATA")
-        return FILE_INFO_DATA
+    ua = request.headers.get("User-Agent", "Unknown")
 
-    # Caso padrão para qualquer outra requisição do jogo
-    return VERSION_DATA
+    print(f"\n>>> {request.method} /{path}")
+    print(f">>> UA: {ua}")
+
+    response_text = f"""versioninfo
+{VERSION}
+
+fileinfo
+{FILEINFO}
+"""
+
+    return Response(
+        response_text,
+        status=200,
+        mimetype="text/plain; charset=utf-8"
+    )
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host="0.0.0.0", port=port)
