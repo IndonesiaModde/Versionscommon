@@ -1,9 +1,12 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, jsonify
+import os
 
 app = Flask(__name__)
 
+# ==============================
 # CONFIG
-GAME_VERSION = "1.17.1"
+# ==============================
+GAME_VERSION = "1.17.2"
 
 # ==============================
 # LOG PADRÃO
@@ -16,7 +19,7 @@ def log_request():
     print("==============================")
 
 # ==============================
-# ROTA PRINCIPAL (VER.PHP)
+# /live/ver.php (VERSÃO)
 # ==============================
 @app.route("/live/ver.php", methods=["GET"])
 def ver():
@@ -24,29 +27,41 @@ def ver():
 
     print(">>> USANDO MODO FINAL: LEGACY_7")
 
-    response_text = f"""versioninfo
-{GAME_VERSION}
-fileinfo=/assets/android/fileinfo"""
+    # ⚠️ STRING CRÍTICA (SEM QUEBRA EXTRA)
+    response_text = f"versioninfo\n{GAME_VERSION}\nfileinfo=/assets/android/fileinfo"
 
-    return Response(response_text, mimetype="text/plain")
+    # DEBUG BRUTO
+    print(">>> RESPONSE RAW:", repr(response_text))
+
+    return Response(
+        response_text,
+        headers={
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive"
+        }
+    )
 
 # ==============================
-# FILEINFO (OBRIGATÓRIO)
+# /assets/android/fileinfo
 # ==============================
 @app.route("/assets/android/fileinfo", methods=["GET"])
 def fileinfo():
     print("\n>>> FILEINFO REQUEST RECEBIDA")
 
-    return {
+    data = {
         "status": "ok",
         "version": GAME_VERSION,
-        "url": "https://discord.gg/gXXYjY8k4",
+        "url": "https://discord.gg/gXXYjY8k4",  # ⚠️ TROCAR DEPOIS
         "size": "12345678",
-        "force": True
+        "force": False
     }
 
+    print(">>> RESPONSE FILEINFO:", data)
+
+    return jsonify(data)
+
 # ==============================
-# ROTA ROOT (EVITA ERRO NO RENDER)
+# ROOT (OBRIGATÓRIO NO RENDER)
 # ==============================
 @app.route("/", methods=["GET", "HEAD"])
 def home():
@@ -56,6 +71,5 @@ def home():
 # START
 # ==============================
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
