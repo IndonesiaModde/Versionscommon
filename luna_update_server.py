@@ -6,7 +6,7 @@ app = Flask(__name__)
 # ==============================
 # CONFIG
 # ==============================
-GAME_VERSION = "1.17.2"
+GAME_VERSION = "1.17.1"  # 🔥 AGORA IGUAL AO CLIENTE
 BASE_URL = "https://versionscommon.onrender.com"
 
 # ==============================
@@ -20,7 +20,7 @@ def log_request():
     print("==============================")
 
 # ==============================
-# /live/ver.php (VERSÃO)
+# /live/ver.php
 # ==============================
 @app.route("/live/ver.php", methods=["GET"])
 def ver():
@@ -28,10 +28,8 @@ def ver():
 
     print(">>> USANDO MODO FINAL: LEGACY_7")
 
-    # ✅ URL ABSOLUTA (IMPORTANTE)
     response_text = f"versioninfo\n{GAME_VERSION}\nfileinfo={BASE_URL}/assets/android/fileinfo"
 
-    # DEBUG
     print(">>> RESPONSE RAW:", repr(response_text))
 
     return Response(
@@ -54,7 +52,7 @@ def fileinfo():
     data = {
         "status": "ok",
         "version": GAME_VERSION,
-        "url": f"{BASE_URL}/update.apk",  # ⚠️ coloque seu APK real aqui
+        "url": f"{BASE_URL}/update.apk",
         "size": "12345678",
         "force": True
     }
@@ -64,16 +62,27 @@ def fileinfo():
     return jsonify(data)
 
 # ==============================
-# APK DOWNLOAD (SIMULA CDN)
+# APK (fake)
 # ==============================
 @app.route("/update.apk", methods=["GET"])
 def download_apk():
     print("\n>>> APK DOWNLOAD REQUEST")
-
     return "APK HERE", 200
 
 # ==============================
-# ROOT (OBRIGATÓRIO NO RENDER)
+# 🔥 CATCH ALL /live/*
+# ==============================
+@app.route("/live/<path:anything>", methods=["GET"])
+def catch_all_live(anything):
+    print("\n🚨 NOVA ROTA DESCOBERTA:")
+    print(">>> /live/" + anything)
+    print(">>> PARAMS:", dict(request.args))
+
+    # resposta neutra
+    return "OK", 200
+
+# ==============================
+# ROOT
 # ==============================
 @app.route("/", methods=["GET", "HEAD"])
 def home():
