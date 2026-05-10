@@ -4,78 +4,64 @@ app = Flask(__name__)
 
 LATEST_VERSION = "1.17.2"
 
-MODES = [
-    "LEGACY_7",  # 🔥 PRIORIDADE REAL
-    "LEGACY_8",
-    "LEGACY_6",
-    "LEGACY_5",
-    "LEGACY_4",
-    "LEGACY_3",
-    "LEGACY_2",
-    "LEGACY_1"
-]
-
-working_mode = None
+# 🔥 MODO DEFINIDO (sem auto-teste agora)
+WORKING_MODE = "LEGACY_7"
 
 
-def build_response(mode):
-    if mode == "LEGACY_1":
-        return LATEST_VERSION
-
-    elif mode == "LEGACY_2":
-        return LATEST_VERSION + "\n"
-
-    elif mode == "LEGACY_3":
-        return f"versioninfo\n{LATEST_VERSION}"
-
-    elif mode == "LEGACY_4":
-        return f"versioninfo\n{LATEST_VERSION}\nfileinfo=/fileinfo"
-
-    elif mode == "LEGACY_5":
-        return f"version={LATEST_VERSION}\nfileinfo=/fileinfo"
-
-    elif mode == "LEGACY_6":
-        return f"versioninfo={LATEST_VERSION}\nfileinfo=/fileinfo"
-
-    elif mode == "LEGACY_7":
+def build_response():
+    if WORKING_MODE == "LEGACY_7":
         return f"versioninfo\n{LATEST_VERSION}\nfileinfo=/assets/android/fileinfo"
 
-    elif mode == "LEGACY_8":
-        return f"version={LATEST_VERSION}\nfileinfo=/assets/android/fileinfo"
 
-
+# ================================
+# 🔹 VERSION CHECK
+# ================================
 @app.route("/live/ver.php", methods=["GET"])
 def version_check():
-    global working_mode
-
     print("\n==============================")
+    print(">>> METHOD:", request.method)
+    print(">>> PATH:", request.path)
     print(">>> PARAMS:", dict(request.args))
     print("==============================")
 
-    # já encontrou → usa direto
-    if working_mode:
-        print(f">>> USANDO MODO FINAL: {working_mode}")
-        return Response(build_response(working_mode), mimetype="text/plain")
+    resp = build_response()
 
-    # 🔥 agora escolhe o MAIS COMPLETO
-    for mode in MODES:
-        resp = build_response(mode)
+    print(">>> USANDO MODO FIXO: LEGACY_7")
+    print(">>> RESPOSTA:\n" + resp)
 
-        print(f">>> TESTANDO: {mode}")
-        print(resp)
-
-        if "fileinfo" in resp:
-            working_mode = mode
-            print(f">>> DEFINIDO COMO CORRETO: {mode}")
-            break
-
-    return Response(build_response(working_mode), mimetype="text/plain")
+    return Response(resp, mimetype="text/plain")
 
 
+# ================================
+# 🔹 FILEINFO (🔥 ESSENCIAL)
+# ================================
+@app.route("/assets/android/fileinfo", methods=["GET"])
+def fileinfo():
+    print("\n==============================")
+    print(">>> FILEINFO REQUEST RECEBIDA")
+    print("==============================")
+
+    # 🔥 versão compatível (texto simples)
+    resp = f"""version={LATEST_VERSION}
+url=https://discord.gg/gXXYjY8k4
+force=1
+"""
+
+    print(">>> RESPOSTA FILEINFO:\n" + resp)
+
+    return Response(resp, mimetype="text/plain")
+
+
+# ================================
+# 🔹 TESTE ROOT
+# ================================
 @app.route("/")
 def home():
-    return "OK", 200
+    return "SERVER OK", 200
 
 
+# ================================
+# 🔹 START
+# ================================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
