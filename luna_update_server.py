@@ -3,14 +3,15 @@ from flask import Flask, request, Response, jsonify
 app = Flask(__name__)
 
 # ================================
-# CONFIG
+# CONFIG REAL
 # ================================
 LATEST_VERSION = "1.17.2"
+
 FILEINFO_URL = "https://versionscommon.onrender.com/assets/android/fileinfo"
 
-APK_URL = "https://github.com/IndonesiaModde/Versionscommon/blob/master/Update.apk"
-APK_SIZE = "15.24MB"
-APK_MD5 = "d41d8cd98f00b204e9800998ecf8427e"
+APK_URL = "https://github.com/IndonesiaModde/Versionscommon/blob/master/Update.apk"  # ⚠️ TROCAR PELO LINK REAL
+APK_SIZE = "307889833"
+APK_MD5 = "471ebda5ff6f1af2eecc8d43a3a4fda2"
 
 # ================================
 # LOG UNIVERSAL
@@ -24,14 +25,14 @@ def log_request():
     print("==============================")
 
 # ================================
-# ROOT (ANTI ERRO 404)
+# ROOT (ANTI HEALTHCHECK)
 # ================================
 @app.route("/", methods=["GET", "HEAD"])
 def home():
     return "OK", 200
 
 # ================================
-# VER.PHP (LEGACY 7 FINAL)
+# VER.PHP (LEGACY_7 FINAL)
 # ================================
 @app.route("/live/ver.php", methods=["GET"])
 def ver():
@@ -71,7 +72,7 @@ def ver():
         return "error", 500
 
 # ================================
-# FILEINFO (JSON)
+# FILEINFO (DOWNLOAD INFO)
 # ================================
 @app.route("/assets/android/fileinfo", methods=["GET"])
 def fileinfo():
@@ -87,7 +88,7 @@ def fileinfo():
     })
 
 # ================================
-# START
+# START SERVER
 # ================================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
