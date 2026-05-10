@@ -32,7 +32,9 @@ def version_check():
 
             response_text = f"""versioninfo
 {CURRENT_VERSION}
-fileinfo={BASE_URL}/assets/android/fileinfo"""
+fileinfo={BASE_URL}/assets/android/fileinfo
+size=12345678
+md5=d41d8cd98f00b204e9800998ecf8427e"""
         else:
             print(">>> CLIENTE ATUALIZADO")
 
@@ -46,7 +48,6 @@ fileinfo={BASE_URL}/assets/android/fileinfo"""
     except Exception as e:
         print(">>> ERRO:", str(e))
         return Response("error", status=500)
-
 # ==============================
 # FILEINFO
 # ==============================
