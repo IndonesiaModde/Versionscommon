@@ -1,41 +1,56 @@
 from flask import Flask, request, Response, jsonify
+import time
 
 app = Flask(__name__)
 
 # ================================
-# CONFIG REAL
+# CONFIG
 # ================================
 LATEST_VERSION = "1.17.2"
-
 FILEINFO_URL = "https://versionscommon.onrender.com/assets/android/fileinfo"
 
-APK_URL = "https://github.com/IndonesiaModde/Versionscommon/blob/master/Update.apk"  # ⚠️ TROCAR PELO LINK REAL
+APK_URL = "https://seuservidor.com/ff.apk"
 APK_SIZE = "307889833"
 APK_MD5 = "471ebda5ff6f1af2eecc8d43a3a4fda2"
 
 # ================================
-# LOG UNIVERSAL
+# 🔥 ALL LOG SCANNER
 # ================================
 @app.before_request
-def log_request():
-    print("\n==============================")
-    print(">>> METHOD:", request.method)
+def full_request_log():
+    print("\n" + "=" * 60)
+    print("📡 INCOMING REQUEST CAPTURED")
+
+    print("\n>>> METHOD:", request.method)
     print(">>> PATH:", request.path)
-    print(">>> PARAMS:", dict(request.args))
-    print("==============================")
+    print(">>> FULL URL:", request.url)
+
+    print("\n>>> QUERY PARAMS:")
+    for k, v in request.args.items():
+        print(f"   {k} = {v}")
+
+    print("\n>>> HEADERS:")
+    for k, v in request.headers.items():
+        print(f"   {k}: {v}")
+
+    print("\n>>> REMOTE IP:", request.remote_addr)
+
+    print("=" * 60 + "\n")
 
 # ================================
-# ROOT (ANTI HEALTHCHECK)
+# ROOT
 # ================================
 @app.route("/", methods=["GET", "HEAD"])
 def home():
     return "OK", 200
 
 # ================================
-# VER.PHP (LEGACY_7 FINAL)
+# VER.PHP (LEGACY_7)
 # ================================
 @app.route("/live/ver.php", methods=["GET"])
 def ver():
+    start = time.time()
+
     try:
         client_version = request.args.get("version", "0")
 
@@ -55,7 +70,7 @@ def ver():
                 "mandatory=1"
             )
         else:
-            print(">>> JÁ ATUALIZADO")
+            print(">>> CLIENT ATUALIZADO")
 
             response_text = (
                 "versioninfo\n"
@@ -63,20 +78,23 @@ def ver():
                 "update=0"
             )
 
-        print(">>> RESPONSE RAW:", repr(response_text))
+        print("\n>>> RESPONSE RAW:\n", response_text)
+
+        elapsed = round(time.time() - start, 4)
+        print(f"\n>>> RESPONSE TIME: {elapsed}s")
 
         return Response(response_text, mimetype="text/plain")
 
     except Exception as e:
-        print(">>> ERRO:", str(e))
+        print(">>> ERROR:", str(e))
         return "error", 500
 
 # ================================
-# FILEINFO (DOWNLOAD INFO)
+# FILEINFO
 # ================================
 @app.route("/assets/android/fileinfo", methods=["GET"])
 def fileinfo():
-    print("\n>>> FILEINFO REQUEST RECEBIDA")
+    print("\n>>> FILEINFO REQUEST RECEIVED")
 
     return jsonify({
         "status": "ok",
