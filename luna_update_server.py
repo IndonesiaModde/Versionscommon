@@ -1,133 +1,137 @@
 from flask import Flask, request, Response
 import time
 import os
-import json
 
 app = Flask(__name__)
 
 # ================================
 # CONFIG
 # ================================
-LATEST_VERSION = "1.17.1"
+LATEST_VERSION = "1.17.2"
 
-FILEINFO_URL = "https://versionscommon.onrender.com/assets/android/fileinfo"
-
+APK_URL = "https://raw.githubusercontent.com/IndonesiaModde/Versionscommon/master/Update.apk"
 APK_SIZE = "307889833"
 APK_MD5 = "471ebda5ff6f1af2eecc8d43a3a4fda2"
 
-FILE_INFO_RAW = """gameassetbundles,mzZtylZ1fawV5N8D8XikRyF+5mY=,12060,0
-main/gameentry,DZlCrLRuzwyuNzUZrh+p0QxJCcI=,2018,0
-localization/loc,gWXz0dDNM8MJyFcAFhzbqWWqvrY=,632921,0
-ingame/avatarmanager,Tjb+QEzOiGwy+DBpxlLrVBZRphA=,1915,0
-config/resconf,ysnx0NubzKPaLVGszrP45y9WQH0=,34896,0"""
+FILEINFO_URL = "https://versionscommon.onrender.com/assets/android/fileinfo"
 
 # ================================
-# 🔥 FULL LOG SCANNER (GLOBAL)
+# 🔥 LOG SCANNER COMPLETO
 # ================================
 @app.before_request
-def log_all_requests():
-    start = time.time()
-    request.start_time = start
-
-    print("\n" + "=" * 70)
-    print("📡 REQUEST CAPTURED")
+def log_all():
+    print("\n" + "=" * 60)
+    print("📡 REQUEST SCANNER")
 
     print("METHOD:", request.method)
     print("PATH:", request.path)
     print("URL:", request.url)
-    print("IP:", request.remote_addr)
 
-    print("\nQUERY PARAMS:")
-    print(dict(request.args))
+    print("\nPARAMS:")
+    for k, v in request.args.items():
+        print(f"  {k}: {v}")
 
     print("\nHEADERS:")
     for k, v in request.headers.items():
-        print(f"{k}: {v}")
+        print(f"  {k}: {v}")
 
-    if request.data:
-        print("\nBODY:")
-        print(request.data.decode(errors="ignore"))
+    print("IP:", request.remote_addr)
+    print("=" * 60 + "\n")
 
-    print("=" * 70 + "\n")
 
 # ================================
-# ROOT
+# 🧠 5 MODOS DE RESPOSTA
 # ================================
-@app.route("/", methods=["GET", "HEAD"])
-def home():
-    return "OK", 200
+def build_response(mode, version):
+    if mode == 1:
+        return f"versioninfo\n{version}\nupdate=0"
+
+    if mode == 2:
+        return (
+            f"versioninfo\n{version}\n"
+            f"fileinfo={FILEINFO_URL}\n"
+            f"update=1"
+        )
+
+    if mode == 3:
+        return (
+            f"versioninfo\n{version}\n"
+            f"fileinfo={FILEINFO_URL}\n"
+            f"size={APK_SIZE}\n"
+            f"md5={APK_MD5}\n"
+            "force=1"
+        )
+
+    if mode == 4:
+        return (
+            f"versioninfo\n{version}\n"
+            "update=1\n"
+            "maintenance=0\n"
+            "message=update_available"
+        )
+
+    if mode == 5:
+        return (
+            f"versioninfo\n{version}\n"
+            f"fileinfo={FILEINFO_URL}\n"
+            "update=1\n"
+            "download_retry=1\n"
+            "safe_mode=1"
+        )
+
+    return f"versioninfo\n{version}\nupdate=0"
+
 
 # ================================
-# VERSION CHECK (/live/ver.php)
+# VER.PHP
 # ================================
 @app.route("/live/ver.php", methods=["GET"])
 def ver():
+
     start = time.time()
 
     client_version = request.args.get("version", "0")
 
     print(">>> CLIENT VERSION:", client_version)
 
+    # escolha automática do modo (debug simples)
     if client_version != LATEST_VERSION:
         print(">>> UPDATE NECESSÁRIO")
-
-        response = (
-            "versioninfo\n"
-            f"{LATEST_VERSION}\n"
-            f"fileinfo={FILEINFO_URL}\n"
-            f"size={APK_SIZE}\n"
-            f"md5={APK_MD5}\n"
-            "force=1\n"
-            "update=1\n"
-            "mandatory=1"
-        )
+        mode = 3
     else:
-        print(">>> CLIENT ATUALIZADO")
+        print(">>> CLIENT OK")
+        mode = 1
 
-        response = (
-            "versioninfo\n"
-            f"{LATEST_VERSION}\n"
-            "update=0"
-        )
+    response_text = build_response(mode, LATEST_VERSION)
 
-    elapsed = round(time.time() - start, 4)
+    print("\n>>> RESPONSE RAW:\n", response_text)
+    print(">>> TIME:", round(time.time() - start, 4), "s")
 
-    print("\n>>> RESPONSE RAW:\n", response)
-    print(">>> RESPONSE TIME:", elapsed, "s")
+    return Response(response_text, mimetype="text/plain")
 
-    return Response(response, mimetype="text/plain")
 
 # ================================
 # FILEINFO
 # ================================
 @app.route("/assets/android/fileinfo", methods=["GET"])
 def fileinfo():
-    print(">>> FILEINFO REQUEST")
-    return Response(FILE_INFO_RAW, mimetype="text/plain")
-
-# ================================
-# CATCH-ALL (DEBUG TOTAL DE ROTAS)
-# ================================
-@app.route("/<path:path>", methods=["GET", "POST", "HEAD"])
-def catch_all(path):
-    print("\n>>> UNKNOWN ROUTE HIT:", path)
-
     return Response(
-        f"unknown route: {path}",
-        mimetype="text/plain",
-        status=404
+        "gameassetbundles,example,12060,0",
+        mimetype="text/plain"
     )
 
-# ================================
-# ERROR HANDLER GLOBAL
-# ================================
-@app.errorhandler(Exception)
-def error_handler(e):
-    print(">>> ERROR:", str(e))
-    return Response("internal error", status=500)
 
 # ================================
-# START SERVER
+# CATCH ALL (DEBUG ROUTER)
+# ================================
+@app.route("/<path:path>")
+def catch(path):
+    print(">>> UNKNOWN ROUTE:", path)
+    return "OK", 200
+
+
+# ================================
+# START
 # ================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
