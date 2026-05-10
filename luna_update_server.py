@@ -5,7 +5,7 @@ app = Flask(__name__)
 # ==============================
 # CONFIG
 # ==============================
-CURRENT_VERSION = "1.17.2"
+CURRENT_VERSION = "1.17.0"
 BASE_URL = "https://versionscommon.onrender.com"
 
 # ==============================
