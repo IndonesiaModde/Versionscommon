@@ -1,5 +1,6 @@
 from flask import Flask, request, Response, send_file
 import os
+import json
 
 app = Flask(__name__)
 
@@ -14,37 +15,60 @@ config/resconf,ysnx0NubzKPaLVGszrP45y9WQH0=,34896,0
 avatar/assetindexer,IbV74Hqrb07rdlrKYQx6JZIhZ5M=,74343,0
 avatar/uma_dcs,BSJQtQt6qEeFdLv8gsrVtPDQubo=,14523,0"""
 
-# 🔁 formatos de versão + fileinfo
-VERSION_FORMATS = [
-    ("PLAIN", lambda v: v),
-    ("NEWLINE", lambda v: v + "\n"),
-    ("KEY_VALUE", lambda v: f"version={v}"),
-    ("VERSIONINFO_BLOCK", lambda v: f"versioninfo\n{v}"),
-    ("VERSIONINFO_EQUAL", lambda v: f"versioninfo={v}"),
-    ("JSON_SIMPLE", lambda v: f'{{"version":"{v}"}}'),
-    ("JSON_VERSIONINFO", lambda v: f'{{"versioninfo":"{v}"}}'),
+# 🔥 JSONs diferentes pra testar
+JSON_FORMATS = [
+    ("JSON_BASIC", lambda v: {
+        "version": v
+    }),
 
-    # 🔥 NOVOS COM FILEINFO
-    ("BLOCK_WITH_FILEINFO", lambda v: f"""versioninfo
-{v}
-fileinfo
-/assets/android/fileinfo
-"""),
+    ("JSON_STATUS", lambda v: {
+        "status": "ok",
+        "version": v
+    }),
 
-    ("EQUAL_WITH_FILEINFO", lambda v: f"""versioninfo={v}
-fileinfo=/assets/android/fileinfo
-"""),
+    ("JSON_WITH_FILEINFO", lambda v: {
+        "status": "ok",
+        "version": v,
+        "fileinfo": "/assets/android/fileinfo"
+    }),
 
-    ("STATUS_WITH_FILEINFO", lambda v: f"""status=ok
-version={v}
-fileinfo=/assets/android/fileinfo
-"""),
+    ("JSON_CAMELCASE", lambda v: {
+        "status": "ok",
+        "version": v,
+        "fileInfo": "/assets/android/fileinfo"
+    }),
+
+    ("JSON_FULL", lambda v: {
+        "status": "ok",
+        "version": v,
+        "versioninfo": v,
+        "fileinfo": "/assets/android/fileinfo",
+        "cdn": "/assets/android/gameassetbundles/"
+    }),
+
+    ("JSON_MULTI_KEYS", lambda v: {
+        "status": "ok",
+        "version": v,
+        "versioninfo": v,
+        "fileinfo": "/assets/android/fileinfo",
+        "fileInfo": "/assets/android/fileinfo",
+        "assets": "/assets/android/gameassetbundles/",
+        "resUrl": "/assets/android/gameassetbundles/"
+    }),
+
+    ("JSON_NESTED", lambda v: {
+        "status": "ok",
+        "data": {
+            "version": v,
+            "fileinfo": "/assets/android/fileinfo"
+        }
+    }),
 ]
 
 request_count = 0
 
 # ==============================
-# 🔍 LOG COMPLETO
+# 🔍 LOG
 # ==============================
 @app.before_request
 def log_request():
@@ -62,29 +86,30 @@ def log_request():
 
 
 # ==============================
-# 🔹 VERSION AUTO TEST
+# 🔹 VERSION AUTO TEST (JSON)
 # ==============================
 @app.route("/live/ver.php")
 def version():
     global request_count
 
-    format_name, formatter = VERSION_FORMATS[request_count % len(VERSION_FORMATS)]
+    format_name, formatter = JSON_FORMATS[request_count % len(JSON_FORMATS)]
     request_count += 1
 
-    response_text = formatter(VERSION)
+    data = formatter(VERSION)
+    response_text = json.dumps(data)
 
-    print(f">>> TESTANDO FORMATO: {format_name}")
-    print(f">>> RESPOSTA:\n{response_text}")
+    print(f">>> TESTANDO JSON: {format_name}")
+    print(f">>> RESPOSTA: {response_text}")
 
     return Response(
         response_text,
         status=200,
-        mimetype="text/plain"
+        mimetype="application/json"
     )
 
 
 # ==============================
-# 🔹 FILEINFO ROTAS
+# 🔹 FILEINFO
 # ==============================
 @app.route("/live/fileinfo")
 @app.route("/live/fileinfo.php")
@@ -107,13 +132,10 @@ def serve_asset(filepath):
     print(f">>> ASSET REQUEST: {filepath}")
 
     if not os.path.exists(full_path):
-        print(">>> ❌ ARQUIVO NÃO EXISTE")
+        print(">>> ❌ NÃO EXISTE")
         return "Not Found", 404
 
-    size = os.path.getsize(full_path)
-    print(f">>> ✅ TAMANHO: {size} bytes")
-
-    return send_file(full_path, as_attachment=False)
+    return send_file(full_path)
 
 
 # ==============================
