@@ -14,7 +14,7 @@ config/resconf,ysnx0NubzKPaLVGszrP45y9WQH0=,34896,0
 avatar/assetindexer,IbV74Hqrb07rdlrKYQx6JZIhZ5M=,74343,0
 avatar/uma_dcs,BSJQtQt6qEeFdLv8gsrVtPDQubo=,14523,0"""
 
-# 🔁 formatos diferentes pra testar automaticamente
+# 🔁 formatos de versão + fileinfo
 VERSION_FORMATS = [
     ("PLAIN", lambda v: v),
     ("NEWLINE", lambda v: v + "\n"),
@@ -23,13 +23,28 @@ VERSION_FORMATS = [
     ("VERSIONINFO_EQUAL", lambda v: f"versioninfo={v}"),
     ("JSON_SIMPLE", lambda v: f'{{"version":"{v}"}}'),
     ("JSON_VERSIONINFO", lambda v: f'{{"versioninfo":"{v}"}}'),
-    ("STATUS_STYLE", lambda v: f"status=ok&version={v}"),
+
+    # 🔥 NOVOS COM FILEINFO
+    ("BLOCK_WITH_FILEINFO", lambda v: f"""versioninfo
+{v}
+fileinfo
+/assets/android/fileinfo
+"""),
+
+    ("EQUAL_WITH_FILEINFO", lambda v: f"""versioninfo={v}
+fileinfo=/assets/android/fileinfo
+"""),
+
+    ("STATUS_WITH_FILEINFO", lambda v: f"""status=ok
+version={v}
+fileinfo=/assets/android/fileinfo
+"""),
 ]
 
 request_count = 0
 
 # ==============================
-# 🔍 LOG
+# 🔍 LOG COMPLETO
 # ==============================
 @app.before_request
 def log_request():
@@ -59,7 +74,7 @@ def version():
     response_text = formatter(VERSION)
 
     print(f">>> TESTANDO FORMATO: {format_name}")
-    print(f">>> RESPOSTA: {repr(response_text)}")
+    print(f">>> RESPOSTA:\n{response_text}")
 
     return Response(
         response_text,
@@ -69,7 +84,7 @@ def version():
 
 
 # ==============================
-# 🔹 FILEINFO (várias rotas)
+# 🔹 FILEINFO ROTAS
 # ==============================
 @app.route("/live/fileinfo")
 @app.route("/live/fileinfo.php")
@@ -89,14 +104,14 @@ def fileinfo():
 def serve_asset(filepath):
     full_path = os.path.join(BASE_DIR, filepath)
 
-    print(f">>> ASSET: {filepath}")
+    print(f">>> ASSET REQUEST: {filepath}")
 
     if not os.path.exists(full_path):
-        print(">>> ERRO: NÃO EXISTE ❌")
+        print(">>> ❌ ARQUIVO NÃO EXISTE")
         return "Not Found", 404
 
     size = os.path.getsize(full_path)
-    print(f">>> TAMANHO: {size} bytes")
+    print(f">>> ✅ TAMANHO: {size} bytes")
 
     return send_file(full_path, as_attachment=False)
 
@@ -107,7 +122,7 @@ def serve_asset(filepath):
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def catch_all(path):
-    print(f">>> ROTA DESCONHECIDA: /{path}")
+    print(f">>> ❓ ROTA DESCONHECIDA: /{path}")
     return "OK", 200
 
 
