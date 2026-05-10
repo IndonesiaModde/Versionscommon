@@ -1,11 +1,11 @@
 from flask import Flask, request
+import json
+import os
 
 app = Flask(__name__)
 
-# --- DADOS DE ATUALIZAÇÃO (VERSIONINFO) ---
+# --- DADOS DE RESPOSTA (IGUAL AO ANTERIOR) ---
 VERSION_DATA = "1.17.1"
-
-# --- DADOS DE ARQUIVOS (FILEINFO) ---
 FILE_INFO_DATA = """gameassetbundles,mzZtylZ1fawV5N8D8XikRyF+5mY=,12060,0
 main/gameentry,DZlCrLRuzwyuNzUZrh+p0QxJCcI=,2018,0
 localization/loc,gWXz0dDNM8MJyFcAFhzbqWWqvrY=,632921,0
@@ -15,24 +15,42 @@ avatar/assetindexer,IbV74Hqrb07rdlrKYQx6JZIhZ5M=,74343,0
 avatar/uma_dcs,BSJQtQt6qEeFdLv8gsrVtPDQubo=,14523,0"""
 
 @app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def handle_update(path):
-    # Log simples para você ver no console do Render/Termux
-    print(f"[+] Pedido recebido: /{path}")
+@app.route("/<path:path>", methods=["GET", "POST", "PUT", "DELETE"])
+def super_logger(path):
+    print("\n" + "="*50)
+    print(f"[!] NOVA REQUISIÇÃO RECEBIDA")
+    print(f"    URL: /{path}")
+    print(f"    MÉTODO: {request.method}")
+    print(f"    IP: {request.remote_addr}")
     
-    # Se o jogo pedir a versão ou informações de arquivo
-    # Baseado na URL longa: /live/100067...
+    print("\n[+] CABEÇALHOS (HEADERS):")
+    for key, value in request.headers.items():
+        print(f"    {key}: {value}")
+        
+    if request.args:
+        print("\n[+] PARÂMETROS DA URL (GET):")
+        for key, value in request.args.items():
+            print(f"    {key}: {value}")
+            
+    if request.data:
+        print("\n[+] DADOS BRUTOS (BODY):")
+        try:
+            print(f"    {request.data.decode('utf-8')}")
+        except:
+            print(f"    [Dados Binários: {len(request.data)} bytes]")
+            
+    print("="*50 + "\n")
+
+    # Respostas baseadas no que você já configurou
     if "live" in path:
-        # Se o jogo estiver pedindo a lista de arquivos (geralmente após a versão)
         if "fileinfo" in path.lower():
             return FILE_INFO_DATA
-        # Por padrão, retorna a versão para liberar o jogo
         return VERSION_DATA
     
     return VERSION_DATA
 
 if __name__ == "__main__":
-    import os
+    # Suporte automático para porta do Render ou porta 8000 local
     port = int(os.environ.get("PORT", 8000))
+    print(f"--- LUNA SUPER LOG SERVER ONLINE NA PORTA {port} ---")
     app.run(host='0.0.0.0', port=port)
-
