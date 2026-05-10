@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 BASE_DIR = "assets/android/gameassetbundles"
 
-VERSION = "1.17.1"
+VERSION = "1.17.2"
 
 FILEINFO = """gameassetbundles,mzZtylZ1fawV5N8D8XikRyF+5mY=,12060,0
 main/gameentry,DZlCrLRuzwyuNzUZrh+p0QxJCcI=,2018,0
