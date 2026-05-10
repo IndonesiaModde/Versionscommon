@@ -2,12 +2,19 @@ from flask import Flask, request, Response, jsonify
 
 app = Flask(__name__)
 
-CURRENT_VERSION = "1.17.2"
-BASE_URL = "https://versionscommon.onrender.com"
+# ================================
+# CONFIG
+# ================================
+LATEST_VERSION = "1.17.2"
+FILEINFO_URL = "https://versionscommon.onrender.com/assets/android/fileinfo"
 
-# ==============================
-# LOG GLOBAL
-# ==============================
+APK_URL = "https://seuservidor.com/update.apk"
+APK_SIZE = "12345678"
+APK_MD5 = "d41d8cd98f00b204e9800998ecf8427e"
+
+# ================================
+# LOG UNIVERSAL
+# ================================
 @app.before_request
 def log_request():
     print("\n==============================")
@@ -16,122 +23,163 @@ def log_request():
     print(">>> PARAMS:", dict(request.args))
     print("==============================")
 
-# ==============================
-# ROOT
-# ==============================
+# ================================
+# ROOT (ANTI ERRO 404)
+# ================================
 @app.route("/", methods=["GET", "HEAD"])
 def home():
     return "OK", 200
 
-# ==============================
-# VERSION CHECK (FORÇADO)
-# ==============================
+# ================================
+# VER.PHP (LEGACY 7 FINAL)
+# ================================
 @app.route("/live/ver.php", methods=["GET"])
-def version_check():
+def ver():
     try:
-        client_version = request.args.get("version", "")
+        client_version = request.args.get("version", "0")
 
         print(">>> CLIENT VERSION:", client_version)
 
-        if client_version != CURRENT_VERSION:
+        if client_version != LATEST_VERSION:
             print(">>> UPDATE NECESSÁRIO")
 
-            response_text = f"""versioninfo
-{CURRENT_VERSION}
-fileinfo={BASE_URL}/assets/android/fileinfo
-size=12345678
-md5=d41d8cd98f00b204e9800998ecf8427e
-force=1
-update=1
-mandatory=1"""
+            response_text = (
+                "versioninfo\n"
+                f"{LATEST_VERSION}\n"
+                f"fileinfo={FILEINFO_URL}\n"
+                f"size={APK_SIZE}\n"
+                f"md5={APK_MD5}\n"
+                "force=1\n"
+                "update=1\n"
+                "mandatory=1"
+            )
         else:
-            print(">>> CLIENTE ATUALIZADO")
+            print(">>> JÁ ATUALIZADO")
 
-            response_text = f"""versioninfo
-{CURRENT_VERSION}"""
+            response_text = (
+                "versioninfo\n"
+                f"{LATEST_VERSION}\n"
+                "update=0"
+            )
 
         print(">>> RESPONSE RAW:", repr(response_text))
 
-        return Response(
-            response_text,
-            status=200,
-            mimetype="text/plain",
-            headers={
-                "Connection": "keep-alive"
-            }
-        )
+        return Response(response_text, mimetype="text/plain")
 
     except Exception as e:
         print(">>> ERRO:", str(e))
-        return Response("error", status=500)
+        return "error", 500
 
-# ==============================
-# FILEINFO
-# ==============================
+# ================================
+# FILEINFO (JSON)
+# ================================
 @app.route("/assets/android/fileinfo", methods=["GET"])
 def fileinfo():
-    try:
-        print(">>> FILEINFO REQUEST RECEBIDA")
+    print("\n>>> FILEINFO REQUEST RECEBIDA")
 
-        return jsonify({
-            "ret": 0,
-            "msg": "ok",
-            "version": CURRENT_VERSION,
-            "force": True,
-            "mandatory": True,
-            "download_url": f"{BASE_URL}/update.apk",
-            "url": f"{BASE_URL}/update.apk",
-            "file_size": 12345678,
-            "size": 12345678
-        }), 200, {
-            "Content-Type": "application/json",
-            "Connection": "keep-alive"
-        }
+    return jsonify({
+        "status": "ok",
+        "version": LATEST_VERSION,
+        "url": APK_URL,
+        "size": APK_SIZE,
+        "md5": APK_MD5,
+        "force": True
+    })
 
-    except Exception as e:
-        print(">>> ERRO FILEINFO:", str(e))
-        return jsonify({"ret": -1}), 500
+# ================================
+# START
+# ================================
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)from flask import Flask, request, Response, jsonify
 
-# ==============================
-# APK DOWNLOAD
-# ==============================
-@app.route("/update.apk", methods=["GET"])
-def download_apk():
-    try:
-        print(">>> DOWNLOAD APK")
+app = Flask(__name__)
 
-        return Response(
-            "APK_PLACEHOLDER",
-            mimetype="application/octet-stream",
-            headers={
-                "Content-Disposition": "attachment; filename=update.apk"
-            }
-        )
+# ================================
+# CONFIG
+# ================================
+LATEST_VERSION = "1.17.3"
+FILEINFO_URL = "https://versionscommon.onrender.com/assets/android/fileinfo"
 
-    except Exception as e:
-        print(">>> ERRO APK:", str(e))
-        return Response("error", status=500)
+APK_URL = "https://github.com/IndonesiaModde/Versionscommon/blob/master/Update.apk"
+APK_SIZE = "15.24MB"
+APK_MD5 = "d41d8cd98f00b204e9800998ecf8427e"
 
-# ==============================
-# CAPTURA DE ENDPOINT OCULTO
-# ==============================
-@app.route("/live/<path:anything>", methods=["GET"])
-def catch_live(anything):
-    print(">>> ENDPOINT SECRETO DETECTADO:", anything)
+# ================================
+# LOG UNIVERSAL
+# ================================
+@app.before_request
+def log_request():
+    print("\n==============================")
+    print(">>> METHOD:", request.method)
+    print(">>> PATH:", request.path)
+    print(">>> PARAMS:", dict(request.args))
+    print("==============================")
 
-    # resposta genérica pra não quebrar o app
-    return Response("OK", status=200)
-
-# ==============================
-# CATCH ALL (debug geral)
-# ==============================
-@app.route("/<path:anything>", methods=["GET"])
-def catch_all(anything):
-    print(">>> ROTA DESCONHECIDA:", anything)
+# ================================
+# ROOT (ANTI ERRO 404)
+# ================================
+@app.route("/", methods=["GET", "HEAD"])
+def home():
     return "OK", 200
 
-# ==============================
+# ================================
+# VER.PHP (LEGACY 7 FINAL)
+# ================================
+@app.route("/live/ver.php", methods=["GET"])
+def ver():
+    try:
+        client_version = request.args.get("version", "0")
+
+        print(">>> CLIENT VERSION:", client_version)
+
+        if client_version != LATEST_VERSION:
+            print(">>> UPDATE NECESSÁRIO")
+
+            response_text = (
+                "versioninfo\n"
+                f"{LATEST_VERSION}\n"
+                f"fileinfo={FILEINFO_URL}\n"
+                f"size={APK_SIZE}\n"
+                f"md5={APK_MD5}\n"
+                "force=1\n"
+                "update=1\n"
+                "mandatory=1"
+            )
+        else:
+            print(">>> JÁ ATUALIZADO")
+
+            response_text = (
+                "versioninfo\n"
+                f"{LATEST_VERSION}\n"
+                "update=0"
+            )
+
+        print(">>> RESPONSE RAW:", repr(response_text))
+
+        return Response(response_text, mimetype="text/plain")
+
+    except Exception as e:
+        print(">>> ERRO:", str(e))
+        return "error", 500
+
+# ================================
+# FILEINFO (JSON)
+# ================================
+@app.route("/assets/android/fileinfo", methods=["GET"])
+def fileinfo():
+    print("\n>>> FILEINFO REQUEST RECEBIDA")
+
+    return jsonify({
+        "status": "ok",
+        "version": LATEST_VERSION,
+        "url": APK_URL,
+        "size": APK_SIZE,
+        "md5": APK_MD5,
+        "force": True
+    })
+
+# ================================
 # START
-# ==============================
+# ================================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
