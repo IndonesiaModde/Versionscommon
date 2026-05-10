@@ -5,8 +5,20 @@ app = Flask(__name__)
 
 LATEST_VERSION = "1.17.2"
 
-# memória simples (cache)
-working_mode = None
+# índice de teste
+current_mode_index = 0
+
+modes = [
+    "LEGACY_1",
+    "LEGACY_2",
+    "LEGACY_3",
+    "LEGACY_4",
+    "LEGACY_5",
+    "LEGACY_6",
+    "LEGACY_7",
+    "LEGACY_8",
+    "JSON_STRICT"
+]
 
 
 def log_request():
@@ -46,53 +58,34 @@ def build_response(mode):
         return Response(f"version={LATEST_VERSION}\nfileinfo=/assets/android/fileinfo", mimetype="text/plain")
 
     elif mode == "JSON_STRICT":
-        return Response(
-            json.dumps({
-                "status": "ok",
-                "version": LATEST_VERSION,
-                "fileinfo": "/assets/android/fileinfo"
-            }),
-            mimetype="application/json"
-        )
+        return jsonify({
+            "status": "ok",
+            "version": LATEST_VERSION,
+            "fileinfo": "/assets/android/fileinfo"
+        })
 
     return Response("invalid", mimetype="text/plain")
 
 
 @app.route("/live/ver.php", methods=["GET"])
 def version_check():
-    global working_mode
+    global current_mode_index
 
     log_request()
 
-    modes = [
-        "LEGACY_1",
-        "LEGACY_2",
-        "LEGACY_3",
-        "LEGACY_4",
-        "LEGACY_5",
-        "LEGACY_6",
-        "LEGACY_7",
-        "LEGACY_8",
-        "JSON_STRICT"
-    ]
+    mode = modes[current_mode_index]
 
-    # se já encontrou um modo válido
-    if working_mode:
-        print(f">>> USANDO MODO FIXO: {working_mode}")
-        return build_response(working_mode)
+    print(f">>> TESTANDO MODO REAL: {mode}")
 
-    # testa automaticamente
-    for mode in modes:
-        print(f">>> TESTANDO MODO: {mode}")
-        resp = build_response(mode)
+    response = build_response(mode)
 
-        # aqui você pode forçar um modo manualmente depois
-        # por enquanto só retorna o primeiro (igual teu antigo)
-        
-        print(f">>> DEFINIDO COMO FUNCIONAL: {mode}")
-        return resp
+    # avança pro próximo modo na próxima request
+    current_mode_index += 1
 
-    return Response("error", mimetype="text/plain")
+    if current_mode_index >= len(modes):
+        current_mode_index = 0  # loopa igual app
+
+    return response
 
 
 @app.route("/")
