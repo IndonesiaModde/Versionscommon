@@ -3,13 +3,9 @@ import os
 
 app = Flask(__name__)
 
-# 📁 pasta base dos assets
 BASE_DIR = "assets/android/gameassetbundles"
-
-# 🔢 versão (mude aqui quando quiser testar)
 VERSION = "1.17.2"
 
-# 📄 fileinfo (igual você já tem)
 FILEINFO = """gameassetbundles,mzZtylZ1fawV5N8D8XikRyF+5mY=,12060,0
 main/gameentry,DZlCrLRuzwyuNzUZrh+p0QxJCcI=,2018,0
 localization/loc,gWXz0dDNM8MJyFcAFhzbqWWqvrY=,632921,0
@@ -18,8 +14,22 @@ config/resconf,ysnx0NubzKPaLVGszrP45y9WQH0=,34896,0
 avatar/assetindexer,IbV74Hqrb07rdlrKYQx6JZIhZ5M=,74343,0
 avatar/uma_dcs,BSJQtQt6qEeFdLv8gsrVtPDQubo=,14523,0"""
 
+# 🔁 formatos diferentes pra testar automaticamente
+VERSION_FORMATS = [
+    ("PLAIN", lambda v: v),
+    ("NEWLINE", lambda v: v + "\n"),
+    ("KEY_VALUE", lambda v: f"version={v}"),
+    ("VERSIONINFO_BLOCK", lambda v: f"versioninfo\n{v}"),
+    ("VERSIONINFO_EQUAL", lambda v: f"versioninfo={v}"),
+    ("JSON_SIMPLE", lambda v: f'{{"version":"{v}"}}'),
+    ("JSON_VERSIONINFO", lambda v: f'{{"versioninfo":"{v}"}}'),
+    ("STATUS_STYLE", lambda v: f"status=ok&version={v}"),
+]
+
+request_count = 0
+
 # ==============================
-# 🔍 LOG GLOBAL
+# 🔍 LOG
 # ==============================
 @app.before_request
 def log_request():
@@ -37,43 +47,49 @@ def log_request():
 
 
 # ==============================
-# 🔹 1. VERSION (CORRETO AGORA)
+# 🔹 VERSION AUTO TEST
 # ==============================
 @app.route("/live/ver.php")
 def version():
-    print(">>> RESPONDENDO VERSÃO SIMPLES")
+    global request_count
 
-    # ⚠️ IMPORTANTE: só versão
+    format_name, formatter = VERSION_FORMATS[request_count % len(VERSION_FORMATS)]
+    request_count += 1
+
+    response_text = formatter(VERSION)
+
+    print(f">>> TESTANDO FORMATO: {format_name}")
+    print(f">>> RESPOSTA: {repr(response_text)}")
+
     return Response(
-        VERSION,
+        response_text,
         status=200,
         mimetype="text/plain"
     )
 
 
 # ==============================
-# 🔹 2. FILEINFO (SEPARADO)
+# 🔹 FILEINFO (várias rotas)
 # ==============================
+@app.route("/live/fileinfo")
+@app.route("/live/fileinfo.php")
+@app.route("/fileinfo")
+@app.route("/fileinfo.php")
 @app.route("/assets/android/fileinfo")
 def fileinfo():
-    print(">>> ENVIANDO FILEINFO")
+    print(">>> 🔥 FILEINFO REQUISITADO 🔥")
 
-    return Response(
-        FILEINFO,
-        status=200,
-        mimetype="text/plain"
-    )
+    return Response(FILEINFO, mimetype="text/plain")
 
 
 # ==============================
-# 🔹 3. ASSETS (DOWNLOAD REAL)
+# 🔹 ASSETS
 # ==============================
 @app.route("/assets/android/gameassetbundles/<path:filepath>")
 def serve_asset(filepath):
     full_path = os.path.join(BASE_DIR, filepath)
 
     print(f">>> ASSET: {filepath}")
-    print(f">>> PATH: {full_path}")
 
     if not os.path.exists(full_path):
         print(">>> ERRO: NÃO EXISTE ❌")
@@ -86,7 +102,7 @@ def serve_asset(filepath):
 
 
 # ==============================
-# 🔹 CAPTURA QUALQUER OUTRA ROTA
+# 🔹 CATCH ALL
 # ==============================
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
