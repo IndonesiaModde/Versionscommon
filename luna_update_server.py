@@ -1,21 +1,21 @@
 from flask import Flask, request, Response, jsonify
+import time
 import os
 
 app = Flask(__name__)
 
 # ================================
-# CONFIG REAL (BYPASS LUNA)
+# CONFIG REAL (100% ORIGINAL)
 # ================================
-# Versão atualizada para 1.17.2 conforme seu código
-LATEST_VERSION = "1.17.1"
+LATEST_VERSION = "1.17.2"
 
-# URLs do servidor
 FILEINFO_URL = "https://versionscommon.onrender.com/assets/android/fileinfo"
-APK_URL = "https://seuservidor.com/ff.apk" 
+
+APK_URL = "https://seuservidor.com/ff.apk"  # ⚠️ TROCAR PELO LINK REAL
 APK_SIZE = "307889833"
 APK_MD5 = "471ebda5ff6f1af2eecc8d43a3a4fda2"
 
-# Dados reais dos arquivos para o Fileinfo
+# Dados reais dos arquivos (Mantido para suporte)
 FILE_INFO_RAW = """gameassetbundles,mzZtylZ1fawV5N8D8XikRyF+5mY=,12060,0
 main/gameentry,DZlCrLRuzwyuNzUZrh+p0QxJCcI=,2018,0
 localization/loc,gWXz0dDNM8MJyFcAFhzbqWWqvrY=,632921,0
@@ -25,43 +25,63 @@ avatar/assetindexer,IbV74Hqrb07rdlrKYQx6JZIhZ5M=,74343,0
 avatar/uma_dcs,BSJQtQt6qEeFdLv8gsrVtPDQubo=,14523,0"""
 
 # ================================
-# LOG UNIVERSAL (SUPER SCANNER)
+# 🔥 ALL LOG SCANNER (100% ORIGINAL)
 # ================================
 @app.before_request
-def log_request():
-    print("\n" + "="*40)
-    print(f">>> {request.method} -> {request.path}")
-    if request.args: print(f">>> PARAMS: {dict(request.args)}")
-    print("="*40)
+def full_request_log():
+    print("\n" + "=" * 60)
+    print("📡 INCOMING REQUEST CAPTURED")
+
+    print("\n>>> METHOD:", request.method)
+    print(">>> PATH:", request.path)
+    print(">>> FULL URL:", request.url)
+
+    print("\n>>> QUERY PARAMS:")
+    for k, v in request.args.items():
+        print(f"   {k} = {v}")
+
+    print("\n>>> HEADERS:")
+    for k, v in request.headers.items():
+        print(f"   {k}: {v}")
+
+    print("\n>>> REMOTE IP:", request.remote_addr)
+
+    print("=" * 60 + "\n")
 
 # ================================
-# ROTAS (SUPORTE A SLASHES EXTRAS)
+# ROOT
 # ================================
-
 @app.route("/", methods=["GET", "HEAD"])
 def home():
-    return "LUNA SERVER V5 ONLINE", 200
+    return "OK", 200
 
-# Usamos um capturador universal para lidar com as barras extras do APK
-@app.route("/<path:path>", methods=["GET", "POST"])
+# ================================
+# SUPORTE A SLASHES EXTRAS (NOVO BYPASS)
+# ================================
+@app.route("/<path:path>", methods=["GET", "POST", "HEAD"])
 def catch_all(path):
-    # 1. VER.PHP (TRATAMENTO DE VERSÃO)
+    # Se o jogo mandar barras extras, redirecionamos para as funções corretas
     if "ver.php" in path.lower():
-        return ver_handler()
-        
-    # 2. FILEINFO (TRATAMENTO DE ARQUIVOS)
+        return ver()
     if "fileinfo" in path.lower():
-        return fileinfo_handler()
-        
+        return fileinfo()
     return home()
 
-def ver_handler():
+# ================================
+# VER.PHP (100% ORIGINAL COM MELHORIA)
+# ================================
+@app.route("/live/ver.php", methods=["GET"])
+def ver():
+    start = time.time()
+
     try:
         client_version = request.args.get("version", "0")
-        print(f">>> CLIENT VERSION: {client_version}")
+
+        print(">>> CLIENT VERSION:", client_version)
 
         if client_version != LATEST_VERSION:
-            print(">>> STATUS: UPDATE NECESSÁRIO")
+            print(">>> UPDATE NECESSÁRIO")
+
             response_text = (
                 "versioninfo\n"
                 f"{LATEST_VERSION}\n"
@@ -73,25 +93,38 @@ def ver_handler():
                 "mandatory=1"
             )
         else:
-            print(">>> STATUS: JÁ ATUALIZADO")
-            response_text = f"versioninfo\n{LATEST_VERSION}\nupdate=0"
+            print(">>> CLIENT ATUALIZADO")
 
-        print(f">>> RESPONSE RAW:\n{response_text}")
+            response_text = (
+                "versioninfo\n"
+                f"{LATEST_VERSION}\n"
+                "update=0"
+            )
+
+        print("\n>>> RESPONSE RAW:\n", response_text)
+
+        elapsed = round(time.time() - start, 4)
+        print(f"\n>>> RESPONSE TIME: {elapsed}s")
+
         return Response(response_text, mimetype="text/plain")
 
     except Exception as e:
-        print(f">>> ERRO: {str(e)}")
+        print(">>> ERROR:", str(e))
         return "error", 500
 
-def fileinfo_handler():
-    print(">>> FILEINFO REQUEST RECEBIDA")
-    # Retorna os dados brutos dos arquivos que o jogo espera
+# ================================
+# FILEINFO (100% ORIGINAL COM MELHORIA)
+# ================================
+@app.route("/assets/android/fileinfo", methods=["GET"])
+def fileinfo():
+    print("\n>>> FILEINFO REQUEST RECEIVED")
+    # Para o Unity, o ideal é retornar texto puro como o original da Luna
     return Response(FILE_INFO_RAW, mimetype="text/plain")
 
 # ================================
 # START SERVER
 # ================================
 if __name__ == "__main__":
-    # Suporte automático para porta do Render ou porta 10000
+    # Suporte automático para porta do Render
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
