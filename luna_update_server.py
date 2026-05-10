@@ -13,10 +13,8 @@ APK_URL = "https://raw.githubusercontent.com/IndonesiaModde/Versionscommon/maste
 APK_SIZE = "307889833"
 APK_MD5 = "471ebda5ff6f1af2eecc8d43a3a4fda2"
 
-FILEINFO_URL = "https://versionscommon.onrender.com/assets/android/fileinfo"
-
 # ================================
-# 🔥 LOG SCANNER COMPLETO
+# LOG SCANNER COMPLETO
 # ================================
 @app.before_request
 def log_all():
@@ -40,46 +38,22 @@ def log_all():
 
 
 # ================================
-# 🧠 5 MODOS DE RESPOSTA
+# RESPONSE BUILDER (CORRIGIDO)
 # ================================
-def build_response(mode, version):
-    if mode == 1:
+def build_response(version, client_version):
+    if client_version == version:
         return f"versioninfo\n{version}\nupdate=0"
 
-    if mode == 2:
-        return (
-            f"versioninfo\n{version}\n"
-            f"fileinfo={FILEINFO_URL}\n"
-            f"update=1"
-        )
-
-    if mode == 3:
-        return (
-            f"versioninfo\n{version}\n"
-            f"fileinfo={FILEINFO_URL}\n"
-            f"size={APK_SIZE}\n"
-            f"md5={APK_MD5}\n"
-            "force=1"
-        )
-
-    if mode == 4:
-        return (
-            f"versioninfo\n{version}\n"
-            "update=1\n"
-            "maintenance=0\n"
-            "message=update_available"
-        )
-
-    if mode == 5:
-        return (
-            f"versioninfo\n{version}\n"
-            f"fileinfo={FILEINFO_URL}\n"
-            "update=1\n"
-            "download_retry=1\n"
-            "safe_mode=1"
-        )
-
-    return f"versioninfo\n{version}\nupdate=0"
+    # UPDATE MODE (FIXED)
+    return (
+        f"versioninfo\n{version}\n"
+        f"fileinfo={APK_URL}\n"
+        f"size={APK_SIZE}\n"
+        f"md5={APK_MD5}\n"
+        "force=1\n"
+        "update=1\n"
+        "mandatory=1"
+    )
 
 
 # ================================
@@ -94,15 +68,7 @@ def ver():
 
     print(">>> CLIENT VERSION:", client_version)
 
-    # escolha automática do modo (debug simples)
-    if client_version != LATEST_VERSION:
-        print(">>> UPDATE NECESSÁRIO")
-        mode = 3
-    else:
-        print(">>> CLIENT OK")
-        mode = 1
-
-    response_text = build_response(mode, LATEST_VERSION)
+    response_text = build_response(LATEST_VERSION, client_version)
 
     print("\n>>> RESPONSE RAW:\n", response_text)
     print(">>> TIME:", round(time.time() - start, 4), "s")
@@ -111,18 +77,21 @@ def ver():
 
 
 # ================================
-# FILEINFO
+# FILEINFO (CORRIGIDO - NÃO MAIS FAKE)
 # ================================
 @app.route("/assets/android/fileinfo", methods=["GET"])
 def fileinfo():
+
+    print(">>> FILEINFO REQUEST")
+
     return Response(
-        "gameassetbundles,example,12060,0",
+        f"apk,{APK_URL},{APK_SIZE},{APK_MD5}",
         mimetype="text/plain"
     )
 
 
 # ================================
-# CATCH ALL (DEBUG ROUTER)
+# CATCH ALL
 # ================================
 @app.route("/<path:path>")
 def catch(path):
