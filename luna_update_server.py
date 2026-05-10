@@ -7,7 +7,7 @@ app = Flask(__name__)
 # ================================
 # CONFIG PRINCIPAL
 # ================================
-LATEST_VERSION = "1.17.2"
+LATEST_VERSION = "1.17.1"
 
 APK_URL = "https://raw.githubusercontent.com/IndonesiaModde/Versionscommon/master/Update.apk"
 APK_SIZE = "307889833"
