@@ -7,6 +7,7 @@ app = Flask(__name__)
 # CONFIG
 # ==============================
 GAME_VERSION = "1.17.2"
+BASE_URL = "https://versionscommon.onrender.com"
 
 # ==============================
 # LOG PADRÃO
@@ -27,17 +28,19 @@ def ver():
 
     print(">>> USANDO MODO FINAL: LEGACY_7")
 
-    # ⚠️ STRING CRÍTICA (SEM QUEBRA EXTRA)
-    response_text = f"versioninfo\n{GAME_VERSION}\nfileinfo=/assets/android/fileinfo"
+    # ✅ URL ABSOLUTA (IMPORTANTE)
+    response_text = f"versioninfo\n{GAME_VERSION}\nfileinfo={BASE_URL}/assets/android/fileinfo"
 
-    # DEBUG BRUTO
+    # DEBUG
     print(">>> RESPONSE RAW:", repr(response_text))
 
     return Response(
         response_text,
         headers={
             "Content-Type": "text/plain; charset=utf-8",
-            "Connection": "keep-alive"
+            "Connection": "keep-alive",
+            "Server": "nginx",
+            "X-Powered-By": "PHP/7.4"
         }
     )
 
@@ -51,14 +54,23 @@ def fileinfo():
     data = {
         "status": "ok",
         "version": GAME_VERSION,
-        "url": "https://discord.gg/gXXYjY8k4",  # ⚠️ TROCAR DEPOIS
+        "url": f"{BASE_URL}/update.apk",  # ⚠️ coloque seu APK real aqui
         "size": "12345678",
-        "force": False
+        "force": True
     }
 
     print(">>> RESPONSE FILEINFO:", data)
 
     return jsonify(data)
+
+# ==============================
+# APK DOWNLOAD (SIMULA CDN)
+# ==============================
+@app.route("/update.apk", methods=["GET"])
+def download_apk():
+    print("\n>>> APK DOWNLOAD REQUEST")
+
+    return "APK HERE", 200
 
 # ==============================
 # ROOT (OBRIGATÓRIO NO RENDER)
