@@ -2,15 +2,9 @@ from flask import Flask, request, Response, jsonify
 
 app = Flask(__name__)
 
-# ==============================
-# CONFIG
-# ==============================
-CURRENT_VERSION = "1.17.0"
+CURRENT_VERSION = "1.17.2"
 BASE_URL = "https://versionscommon.onrender.com"
 
-# ==============================
-# LOG GLOBAL
-# ==============================
 @app.before_request
 def log_request():
     print("\n==============================")
@@ -19,27 +13,32 @@ def log_request():
     print(">>> PARAMS:", dict(request.args))
     print("==============================")
 
-# ==============================
-# ROOT (evita erro no Render)
-# ==============================
 @app.route("/", methods=["GET", "HEAD"])
 def home():
     return "OK", 200
 
 # ==============================
-# VERSION CHECK (LEGACY_7)
+# VERSION CHECK
 # ==============================
 @app.route("/live/ver.php", methods=["GET"])
 def version_check():
     try:
         client_version = request.args.get("version", "")
 
-        print(">>> USANDO MODO FINAL: LEGACY_7")
+        print(">>> CLIENT VERSION:", client_version)
 
-        # resposta padrão (sempre manda update)
-        response_text = f"""versioninfo
+        # só manda update se for menor
+        if client_version != CURRENT_VERSION:
+            print(">>> UPDATE NECESSÁRIO")
+
+            response_text = f"""versioninfo
 {CURRENT_VERSION}
 fileinfo={BASE_URL}/assets/android/fileinfo"""
+        else:
+            print(">>> CLIENTE ATUALIZADO")
+
+            response_text = f"""versioninfo
+{CURRENT_VERSION}"""
 
         print(">>> RESPONSE RAW:", repr(response_text))
 
@@ -50,7 +49,7 @@ fileinfo={BASE_URL}/assets/android/fileinfo"""
         return Response("error", status=500)
 
 # ==============================
-# FILEINFO (JSON)
+# FILEINFO
 # ==============================
 @app.route("/assets/android/fileinfo", methods=["GET"])
 def fileinfo():
@@ -68,6 +67,20 @@ def fileinfo():
     except Exception as e:
         print(">>> ERRO FILEINFO:", str(e))
         return jsonify({"error": "internal"}), 500
+
+# ==============================
+# APK DOWNLOAD (IMPORTANTE)
+# ==============================
+@app.route("/update.apk", methods=["GET"])
+def download_apk():
+    try:
+        print(">>> DOWNLOAD APK")
+
+        return Response("APK AQUI", mimetype="application/octet-stream")
+
+    except Exception as e:
+        print(">>> ERRO APK:", str(e))
+        return Response("error", status=500)
 
 # ==============================
 # START
