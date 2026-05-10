@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, Response
 import os
 
 app = Flask(__name__)
@@ -13,21 +13,33 @@ config/resconf,ysnx0NubzKPaLVGszrP45y9WQH0=,34896,0
 avatar/assetindexer,IbV74Hqrb07rdlrKYQx6JZIhZ5M=,74343,0
 avatar/uma_dcs,BSJQtQt6qEeFdLv8gsrVtPDQubo=,14523,0"""
 
-# controle de testes automáticos
+# modos focados em formatos LEGACY (sem JSON)
 test_mode = 0
 
 MODES = [
-    ("PLAIN", lambda: VERSION),
-    ("PLAIN_NEWLINE", lambda: VERSION + "\n"),
-    ("JSON_BASIC", lambda: jsonify({"version": VERSION})),
-    ("JSON_STATUS", lambda: jsonify({"status": "ok", "version": VERSION})),
-    ("JSON_FULL", lambda: jsonify({
-        "status": "ok",
-        "version": VERSION,
-        "fileinfo": "/fileinfo",
-        "assets": "/assets/android/"
-    })),
-    ("RAW_BLOCK", lambda: f"versioninfo\n{VERSION}")
+    ("LEGACY_1", lambda: f"{VERSION}"),
+    
+    ("LEGACY_2", lambda: f"{VERSION}\n"),
+    
+    ("LEGACY_3", lambda: f"""versioninfo
+{VERSION}"""),
+    
+    ("LEGACY_4", lambda: f"""versioninfo
+{VERSION}
+fileinfo=/fileinfo"""),
+    
+    ("LEGACY_5", lambda: f"""version={VERSION}
+fileinfo=/fileinfo"""),
+    
+    ("LEGACY_6", lambda: f"""versioninfo={VERSION}
+fileinfo=/fileinfo"""),
+    
+    ("LEGACY_7", lambda: f"""versioninfo
+{VERSION}
+fileinfo=/assets/android/fileinfo"""),
+    
+    ("LEGACY_8", lambda: f"""version={VERSION}
+fileinfo=/assets/android/fileinfo"""),
 ]
 
 
@@ -49,21 +61,22 @@ def version():
 
     mode_name, func = MODES[test_mode]
 
+    response_text = func()
+
     print(f">>> TESTANDO MODO: {mode_name}")
-
-    response = func()
-
-    print(f">>> RESPOSTA: {response}")
+    print(">>> RESPOSTA:")
+    print(response_text)
 
     test_mode = (test_mode + 1) % len(MODES)
 
-    return response
+    return Response(response_text, mimetype="text/plain")
 
 
 @app.route("/fileinfo", methods=["GET"])
+@app.route("/assets/android/fileinfo", methods=["GET"])
 def fileinfo():
     log_request()
-    print(">>> ENVIANDO FILEINFO")
+    print(">>> 📦 ENVIANDO FILEINFO")
 
     return Response(FILEINFO, mimetype="text/plain")
 
@@ -71,9 +84,9 @@ def fileinfo():
 @app.route("/assets/<path:subpath>", methods=["GET"])
 def assets(subpath):
     log_request()
-    print(f">>> REQUEST ASSET: {subpath}")
+    print(f">>> 📁 REQUEST ASSET: {subpath}")
 
-    # Simulação (você ainda não colocou arquivos reais)
+    # ainda mock (sem arquivos reais)
     return Response("OK", mimetype="text/plain")
 
 
